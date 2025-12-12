@@ -102,14 +102,18 @@ public class Shooter extends SubsystemBase{
     public void periodic() {
         double currentVelo = shooterMotor.getEncoder().getVelocity();
         SmartDashboard.putNumber("live shooter speed", currentVelo);
+        controller.setPID(kP.getNumber(), kI.getNumber(), kD.getNumber());
+        double ff = target / 6784;
+        double pidVal = controller.calculate(currentVelo, target);
+        double val = ff + pidVal;
+
+        SmartDashboard.putNumber("val", val);
+        SmartDashboard.putNumber("pid val", pidVal);
+
         if (usePID && !stopped) {
-            controller.setPID(kP.getNumber(), kI.getNumber(), kD.getNumber());
-            double ff = target / 6784;
-
-            double val = ff + controller.calculate(currentVelo, target);
-
             shooterMotor.set(val);
-        }
+        } else if (stopped) shooterMotor.set(0);
+
         SmartDashboard.putBoolean("at velocity", this.atTargetVelocity());
     }
 
