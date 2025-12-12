@@ -13,10 +13,10 @@ import frc.robot.util.SmartDashboardNumber;
 public class Drivetrain extends SubsystemBase{
     private static Drivetrain instance = null;
 
-    private SparkMax fl = new SparkMax(0, MotorType.kBrushless);
-    private SparkMax fr = new SparkMax(0, MotorType.kBrushless);
-    private SparkMax bl = new SparkMax(0, MotorType.kBrushless);
-    private SparkMax br = new SparkMax(0, MotorType.kBrushless);
+    private SparkMax fl = new SparkMax(37, MotorType.kBrushless);
+    private SparkMax fr = new SparkMax(44, MotorType.kBrushless);
+    private SparkMax bl = new SparkMax(27, MotorType.kBrushless);
+    private SparkMax br = new SparkMax(47, MotorType.kBrushless);
 
     private SmartDashboardNumber maxDrive = new SmartDashboardNumber("dt/max drive", 1);
     private SmartDashboardNumber maxTurn = new SmartDashboardNumber("dt/max turn", 0.5);
@@ -26,9 +26,9 @@ public class Drivetrain extends SubsystemBase{
 
     private Drivetrain() {
         SparkMaxConfig leftConfig = new SparkMaxConfig();
-        leftConfig.idleMode(IdleMode.kBrake).inverted(true);
+        leftConfig.idleMode(IdleMode.kBrake).inverted(false);
         SparkMaxConfig rightConfig = new SparkMaxConfig();
-        rightConfig.idleMode(IdleMode.kBrake).inverted(false);
+        rightConfig.idleMode(IdleMode.kBrake).inverted(true);
 
         fl.configure(leftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         bl.configure(leftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

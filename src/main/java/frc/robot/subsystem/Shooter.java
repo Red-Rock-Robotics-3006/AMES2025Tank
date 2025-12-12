@@ -9,6 +9,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -16,20 +18,26 @@ import frc.robot.util.SmartDashboardNumber;
 
 public class Shooter extends SubsystemBase{
     private static Shooter instance = null;
-    private static boolean usePID = true;
+    private static boolean usePID = false;
 
-    private SparkFlex shooterMotor = new SparkFlex(0, MotorType.kBrushed);
-    private SparkFlex indexMotor = new SparkFlex(0, MotorType.kBrushed);
+    private SparkFlex shooterMotor = new SparkFlex(60, MotorType.kBrushless);
+    private SparkFlex indexMotor = new SparkFlex(61, MotorType.kBrushless);
 
     private SmartDashboardNumber indexSpeed = new SmartDashboardNumber("index speed", 0.3);
-    private SmartDashboardNumber shootSpeed = new SmartDashboardNumber("shoot speed", 400);
+    private SmartDashboardNumber shootSpeed = new SmartDashboardNumber("shoot speed", 4000);
 
-    private SmartDashboardNumber kP = new SmartDashboardNumber("shooter/kp", 0.01);
+    private SmartDashboardNumber kP = new SmartDashboardNumber("shooter/kp", 0.001);
     private SmartDashboardNumber kI = new SmartDashboardNumber("shooter/ki", 0.0);
     private SmartDashboardNumber kD = new SmartDashboardNumber("shooter/kd", 0.0);
+
+    private SmartDashboardNumber tolerance = new SmartDashboardNumber("shooter/tolerance", 0.9);
     
     
-    private SparkClosedLoopController controller;
+    private PIDController controller;
+
+    private double target = 0;
+
+    private boolean stopped = true;
 
     private SparkFlexConfig shooterConfigs;
 
@@ -40,16 +48,20 @@ public class Shooter extends SubsystemBase{
         shooterConfigs.idleMode(IdleMode.kBrake);
         shooterConfigs.inverted(false);
 
+        controller = new PIDController(kP.getNumber(), kI.getNumber(), kD.getNumber());
+
         shooterMotor.configure(shooterConfigs, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        controller = shooterMotor.getClosedLoopController();
+        // controller = shooterMotor.getClosedLoopController();
 
     }
 
     public void startShooter() {
         if (usePID)
-            controller.setReference(shootSpeed.getNumber(), ControlType.kVelocity);
+            // controller.setReference(shootSpeed.getNumber(), ControlType.kVelocity);
+            target = shootSpeed.getNumber();
         else
             shooterMotor.set(shootSpeed.getNumber() / 6000d);
+        stopped = false;
     }
 
     public void startIndex() {
@@ -57,10 +69,8 @@ public class Shooter extends SubsystemBase{
     }
 
     public void stopShooter() {
-        if (usePID) 
-            controller.setReference(0, ControlType.kVelocity);
-        else
-            shooterMotor.set(0);
+        shooterMotor.set(0);
+        stopped = true;
     }
 
     public void stopIndex() {
@@ -73,7 +83,7 @@ public class Shooter extends SubsystemBase{
     }
 
     public boolean atTargetVelocity() {
-        return 
+        return shooterMotor.getEncoder().getVelocity() > tolerance.getNumber() * shootSpeed.getNumber();
     }
 
     public Command shootCommand() {
@@ -90,7 +100,17 @@ public class Shooter extends SubsystemBase{
 
     @Override
     public void periodic() {
-        
+        double currentVelo = shooterMotor.getEncoder().getVelocity();
+        SmartDashboard.putNumber("live shooter speed", currentVelo);
+        if (usePID && !stopped) {
+            controller.setPID(kP.getNumber(), kI.getNumber(), kD.getNumber());
+            double ff = target / 6784;
+
+            double val = ff + controller.calculate(currentVelo, target);
+
+            shooterMotor.set(val);
+        }
+        SmartDashboard.putBoolean("at velocity", this.atTargetVelocity());
     }
 
     public static Shooter getInstance() {

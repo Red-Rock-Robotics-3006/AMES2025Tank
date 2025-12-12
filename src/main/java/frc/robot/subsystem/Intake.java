@@ -11,7 +11,7 @@ import frc.robot.util.SmartDashboardNumber;
 
 public class Intake extends SubsystemBase{
     private static Intake instance = null;
-    private SparkFlex intakeMotor = new SparkFlex(0, MotorType.kBrushless);
+    private SparkFlex intakeMotor = new SparkFlex(17, MotorType.kBrushless);
 
     private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake speed", 0.4);
     private SmartDashboardNumber retractSpeed = new SmartDashboardNumber("intake retract speed", -0.2);

@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -25,6 +26,8 @@ public class RobotContainer {
 
     autoChooser.setDefaultOption("Shoot Leave Auto", Autos.shootLeavAuto());
     autoChooser.addOption("No Auto", Autos.emptyAuto());
+
+    SmartDashboard.putData("Auto chooser", autoChooser);
   }
 
   private void configureBindings() {
@@ -32,23 +35,17 @@ public class RobotContainer {
       Commands.run(() -> dt.drive(-controller.getLeftY(), controller.getRightX()), dt)
     );
 
-    controller.leftTrigger(0.15).onTrue(
-      intake.startIntakeCommand()
-    ).onFalse(
-      intake.stopCommand()
-    );
+    controller.leftTrigger(0.15)
+      .onTrue(intake.startIntakeCommand())
+      .onFalse(intake.stopCommand());
 
-    controller.rightTrigger(0.15).onTrue(
-      shooter.shootCommand()
-    ).onFalse(
-      shooter.stopCommand()
-    );
+    controller.rightTrigger(0.15)
+      .onTrue(shooter.shootCommand())
+      .onFalse(shooter.stopCommand());
 
-    controller.leftBumper().onTrue(
-      intake.startIntakeRetractionCommand()
-    ).onFalse(
-      intake.stopCommand()
-    );
+    controller.leftBumper()
+      .onTrue(intake.startIntakeRetractionCommand())
+      .onFalse(intake.stopCommand());
   }
 
   public Command getAutonomousCommand() {
