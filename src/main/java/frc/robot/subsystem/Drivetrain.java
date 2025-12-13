@@ -7,6 +7,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.SmartDashboardNumber;
 
@@ -18,10 +20,10 @@ public class Drivetrain extends SubsystemBase{
     private SparkMax bl = new SparkMax(27, MotorType.kBrushless);
     private SparkMax br = new SparkMax(47, MotorType.kBrushless);
 
-    private SmartDashboardNumber maxDrive = new SmartDashboardNumber("dt/max drive", 1);
+    private SmartDashboardNumber maxDrive = new SmartDashboardNumber("dt/max drive", 0.95);
     private SmartDashboardNumber maxTurn = new SmartDashboardNumber("dt/max turn", 0.5);
 
-    public SmartDashboardNumber autoDriveSpeed = new SmartDashboardNumber("auto/drive speed", 0.3);
+    public SmartDashboardNumber autoDriveSpeed = new SmartDashboardNumber("auto/drive speed", 0.1);
     public SmartDashboardNumber autoTurnSpeed = new SmartDashboardNumber("auto/turn speed", 0);
 
     private Drivetrain() {
@@ -49,6 +51,25 @@ public class Drivetrain extends SubsystemBase{
 
     public void driveAuto() {
         this.driveRaw(autoDriveSpeed.getNumber(), autoTurnSpeed.getNumber());
+    }
+    
+    public void driveAutoRevers() {
+        this.driveRaw(-autoDriveSpeed.getNumber(), -autoTurnSpeed.getNumber());
+        
+    }
+
+    public void turn() {
+        
+        this.driveRaw(0,0.1);
+    }
+
+    public Command turnCommand() {
+        return Commands.sequence(
+            Commands.deadline(
+                Commands.waitSeconds(5), 
+                this.runOnce(this::turn)
+            ),
+            this.runOnce(() -> this.driveRaw(0, 0)));
     }
     
     public static Drivetrain getInstance() {

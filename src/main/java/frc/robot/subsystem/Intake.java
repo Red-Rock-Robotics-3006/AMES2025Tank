@@ -13,12 +13,17 @@ public class Intake extends SubsystemBase{
     private static Intake instance = null;
     private SparkFlex intakeMotor = new SparkFlex(17, MotorType.kBrushless);
 
-    private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake speed", 0.4);
-    private SmartDashboardNumber retractSpeed = new SmartDashboardNumber("intake retract speed", -0.2);
+    private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake speed", 0.4);
+    private SmartDashboardNumber secondaryIntakeSpeed = new SmartDashboardNumber("intake/secondary intake speed", 0.3);
+    private SmartDashboardNumber retractSpeed = new SmartDashboardNumber("intake/intake retract speed", -0.2);
 
     private Intake() {
         SparkFlexConfig config = new SparkFlexConfig();
         config.idleMode(IdleMode.kBrake).inverted(false);
+    }
+
+    public void startSecondaryIntakeSpeed() {
+        intakeMotor.set(secondaryIntakeSpeed.getNumber());
     }
 
     public void startIntake() {
@@ -31,6 +36,10 @@ public class Intake extends SubsystemBase{
 
     public void retractIntake() {
         intakeMotor.set(retractSpeed.getNumber());
+    }
+
+    public Command startSecondaryIntakeSpeedCommand() {
+        return this.runOnce(() -> this.startSecondaryIntakeSpeed());
     }
 
     public Command startIntakeCommand() {

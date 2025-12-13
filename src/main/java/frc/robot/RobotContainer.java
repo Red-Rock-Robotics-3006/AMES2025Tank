@@ -25,6 +25,8 @@ public class RobotContainer {
     configureBindings();
 
     autoChooser.setDefaultOption("Shoot Leave Auto", Autos.shootLeavAuto());
+    autoChooser.addOption(" Leave Auto", Autos.leaveAuto());
+    autoChooser.addOption("Far shoot and leave auto", Autos.farLeaveAuto());
     autoChooser.addOption("No Auto", Autos.emptyAuto());
 
     SmartDashboard.putData("Auto chooser", autoChooser);
@@ -44,6 +46,10 @@ public class RobotContainer {
       .onFalse(shooter.stopCommand());
 
     controller.leftBumper()
+      .onTrue(intake.startSecondaryIntakeSpeedCommand())
+      .onFalse(intake.stopCommand());
+
+    controller.rightBumper()
       .onTrue(intake.startIntakeRetractionCommand())
       .onFalse(intake.stopCommand());
   }

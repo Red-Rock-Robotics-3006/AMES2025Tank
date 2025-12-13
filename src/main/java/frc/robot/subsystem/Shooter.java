@@ -18,21 +18,22 @@ import frc.robot.util.SmartDashboardNumber;
 
 public class Shooter extends SubsystemBase{
     private static Shooter instance = null;
-    private static boolean usePID = false;
 
     private SparkFlex shooterMotor = new SparkFlex(60, MotorType.kBrushless);
     private SparkFlex indexMotor = new SparkFlex(61, MotorType.kBrushless);
 
     private SmartDashboardNumber indexSpeed = new SmartDashboardNumber("index speed", 0.3);
-    private SmartDashboardNumber shootSpeed = new SmartDashboardNumber("shoot speed", 4000);
-
-    private SmartDashboardNumber kP = new SmartDashboardNumber("shooter/kp", 0.001);
+    private SmartDashboardNumber shootSpeed = new SmartDashboardNumber("shoot speed", 3800);
+    private SmartDashboardNumber fartherShootSpeed = new SmartDashboardNumber("far shoot speed", 4515);
+    
+    private SmartDashboardNumber kP = new SmartDashboardNumber("shooter/kp", 0.0002);
     private SmartDashboardNumber kI = new SmartDashboardNumber("shooter/ki", 0.0);
-    private SmartDashboardNumber kD = new SmartDashboardNumber("shooter/kd", 0.0);
+    private SmartDashboardNumber kD = new SmartDashboardNumber("shooter/kd", 0.0000045);
 
-    private SmartDashboardNumber tolerance = new SmartDashboardNumber("shooter/tolerance", 0.9);
+    private SmartDashboardNumber tolerance = new SmartDashboardNumber("shooter/tolerance", 10);
     
-    
+    private boolean usePID = false;
+
     private PIDController controller;
 
     private double target = 0;
@@ -53,14 +54,24 @@ public class Shooter extends SubsystemBase{
         shooterMotor.configure(shooterConfigs, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         // controller = shooterMotor.getClosedLoopController();
 
+        SmartDashboard.putBoolean("use pid", true);
+
     }
 
     public void startShooter() {
+        this.setShooterRPM(shootSpeed.getNumber());
+    }
+
+    public void startFarShot() {
+        this.setShooterRPM(fartherShootSpeed.getNumber());
+    }
+
+    private void setShooterRPM(double rpm) {
         if (usePID)
             // controller.setReference(shootSpeed.getNumber(), ControlType.kVelocity);
-            target = shootSpeed.getNumber();
+            target = rpm;
         else
-            shooterMotor.set(shootSpeed.getNumber() / 6000d);
+            shooterMotor.set(rpm / 6000d);
         stopped = false;
     }
 
@@ -83,12 +94,21 @@ public class Shooter extends SubsystemBase{
     }
 
     public boolean atTargetVelocity() {
-        return shooterMotor.getEncoder().getVelocity() > tolerance.getNumber() * shootSpeed.getNumber();
+        // return shooterMotor.getEncoder().getVelocity() > tolerance.getNumber() * shootSpeed.getNumber();
+        return Double.compare(shooterMotor.getEncoder().getVelocity() + tolerance.getNumber(), target) > 0;
     }
 
     public Command shootCommand() {
         return Commands.sequence(
             Commands.runOnce(() -> this.startShooter(), this),
+            Commands.waitUntil(() -> this.atTargetVelocity()),
+            Commands.runOnce(() -> this.startIndex(), this)
+        );
+    }
+
+    public Command shootFarCommand() {
+        return Commands.sequence(
+            Commands.runOnce(() -> this.startFarShot(), this),
             Commands.waitUntil(() -> this.atTargetVelocity()),
             Commands.runOnce(() -> this.startIndex(), this)
         );
@@ -109,6 +129,8 @@ public class Shooter extends SubsystemBase{
 
         SmartDashboard.putNumber("val", val);
         SmartDashboard.putNumber("pid val", pidVal);
+
+        usePID = SmartDashboard.getBoolean("use pid", false);
 
         if (usePID && !stopped) {
             shooterMotor.set(val);
